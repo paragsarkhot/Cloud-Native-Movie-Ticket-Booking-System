@@ -8,11 +8,6 @@ pipeline {
         pollSCM('H/5 * * * *')
     }
 
-    tools {
-        // Use default Maven or system maven
-        maven 'Default Maven'
-    }
-
     environment {
         DOCKER_BUILDKIT = '1'
     }
