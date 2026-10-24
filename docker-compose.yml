@@ -5,11 +5,12 @@ services:
     image: mysql:8.0
     container_name: movieticket-mysql
     restart: unless-stopped
+    command: --innodb-buffer-pool-size=64M --max-connections=100
     environment:
       MYSQL_ROOT_PASSWORD: "123456"
       MYSQL_DATABASE: user_db
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql-init:/docker-entrypoint-initdb.d
@@ -49,6 +50,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_JVM_PERFORMANCE_OPTS: "-Xmx256m -Xms128m"
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "9092"]
       interval: 10s
@@ -70,6 +72,8 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      JAVA_OPTS: "-Xmx384m -Xms128m"
     networks:
       - movieticket-network
 
@@ -83,6 +87,7 @@ services:
       - "8761:8761"
     environment:
       SPRING_APPLICATION_NAME: eureka-server
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
@@ -99,6 +104,7 @@ services:
     environment:
       SPRING_APPLICATION_NAME: api-gateway
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
@@ -121,6 +127,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
@@ -143,6 +150,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
@@ -165,6 +173,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
@@ -188,6 +197,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
@@ -211,6 +221,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
@@ -234,6 +245,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
@@ -256,6 +268,7 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
@@ -279,6 +292,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
