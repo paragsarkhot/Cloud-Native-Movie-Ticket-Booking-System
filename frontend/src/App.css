@@ -354,18 +354,33 @@ body {
 }
 
 .seat.selected {
-  background: var(--accent);
-  color: #000;
+  background: var(--accent) !important;
+  color: #000 !important;
   font-weight: 700;
-  border-color: var(--accent);
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
 }
 
 .seat.booked {
-  background: #1e293b;
-  color: #64748b;
-  border-color: #1e293b;
-  cursor: not-allowed;
-  opacity: 0.5;
+  background: #64748b !important; /* Distinct solid grey */
+  color: #cbd5e1 !important;
+  border-color: #475569 !important;
+  cursor: not-allowed !important;
+  opacity: 0.65;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.seat-summary-banner {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
 }
 
 .seat-legend {

@@ -63,15 +63,28 @@ export const api = {
   },
 
   // Bookings
-  createBooking: async (userId, showId, seatNumber) => {
+  getBookedSeats: async (showId) => {
+    const res = await fetch(`${API_BASE}/api/bookings/show/${showId}/seats`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  createBooking: async (userId, showId, seats) => {
+    const seatList = Array.isArray(seats) ? seats : [seats];
+    const payload = {
+      userId,
+      showId,
+      seatNumbers: seatList,
+      seatNumber: seatList.join(', '),
+    };
     const res = await fetch(`${API_BASE}/api/bookings`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ userId, showId, seatNumber }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.message || 'Seat is already booked or invalid');
+      throw new Error(err.message || 'One or more selected seats are already booked or invalid');
     }
     return res.json();
   },

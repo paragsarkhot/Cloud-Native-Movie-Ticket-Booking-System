@@ -16,60 +16,43 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    public BookingController(
-            BookingService bookingService) {
-
+    public BookingController(BookingService bookingService) {
         this.bookingService = bookingService;
     }
 
-
     @PostMapping
-    public ResponseEntity<BookingResponse>
-    createBooking(
-            @RequestBody BookingRequest request) {
-
-        BookingResponse booking =
-                bookingService.createBooking(
-                        request
-                );
-
-        return new ResponseEntity<>(
-                booking,
-                HttpStatus.CREATED
-        );
+    public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest request) {
+        BookingResponse booking = bookingService.createBooking(request);
+        return new ResponseEntity<>(booking, HttpStatus.CREATED);
     }
-
 
     @GetMapping
     public List<Booking> getAllBookings() {
-
         return bookingService.getAllBookings();
     }
 
-
     @GetMapping("/{id}")
-    public Booking getBookingById(
-            @PathVariable Long id) {
-
-        return bookingService.getBookingById(
-                id
-        );
+    public Booking getBookingById(@PathVariable Long id) {
+        return bookingService.getBookingById(id);
     }
-
 
     @GetMapping("/user/{userId}")
-    public List<Booking> getUserBookings(
-            @PathVariable Long userId) {
-
-        return bookingService
-                .getBookingsByUser(userId);
+    public List<Booking> getUserBookings(@PathVariable Long userId) {
+        return bookingService.getBookingsByUser(userId);
     }
 
+    @GetMapping("/show/{showId}")
+    public List<Booking> getBookingsByShow(@PathVariable Long showId) {
+        return bookingService.getBookingsByShow(showId);
+    }
+
+    @GetMapping("/show/{showId}/seats")
+    public List<String> getBookedSeatsByShow(@PathVariable Long showId) {
+        return bookingService.getBookedSeatsByShow(showId);
+    }
 
     @PutMapping("/{id}/cancel")
-    public Booking cancelBooking(
-            @PathVariable Long id) {
-
+    public Booking cancelBooking(@PathVariable Long id) {
         return bookingService.cancelBooking(id);
     }
 }

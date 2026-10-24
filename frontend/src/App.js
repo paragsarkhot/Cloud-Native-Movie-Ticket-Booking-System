@@ -24,7 +24,8 @@ function App() {
   // Booking Modal State
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [selectedShow, setSelectedShow] = useState(null);
-  const [selectedSeat, setSelectedSeat] = useState(null);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [bookedSeats, setBookedSeats] = useState([]);
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState(null);
@@ -123,13 +124,23 @@ function App() {
     setUserBookings([]);
   };
 
+  const fetchBookedSeats = async (showId) => {
+    try {
+      const seats = await api.getBookedSeats(showId);
+      setBookedSeats(Array.isArray(seats) ? seats : []);
+    } catch (e) {
+      setBookedSeats([]);
+    }
+  };
+
   const startBookingFlow = async (movie) => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
     setSelectedMovie(movie);
-    setSelectedSeat(null);
+    setSelectedSeats([]);
+    setBookedSeats([]);
     setBookingSuccess(null);
     setBookingError('');
 
@@ -138,6 +149,7 @@ function App() {
       if (showList && showList.length > 0) {
         setSelectedShow(showList[0]);
         setShows(showList);
+        fetchBookedSeats(showList[0].id);
       } else {
         // Fallback demo show
         const demoShow = {
@@ -150,22 +162,33 @@ function App() {
         };
         setSelectedShow(demoShow);
         setShows([demoShow]);
+        fetchBookedSeats(1);
       }
     } catch (e) {
-      setSelectedShow({
+      const demoShow = {
         id: 1,
         movieId: movie.id,
         screenName: 'Screen 1 (IMAX 4K)',
         showDate: '2026-10-25',
         showTime: '19:30:00',
         ticketPrice: 350.0,
-      });
+      };
+      setSelectedShow(demoShow);
+      setShows([demoShow]);
+      fetchBookedSeats(1);
     }
   };
 
+  const handleSeatClick = (seatId) => {
+    if (bookedSeats.includes(seatId)) return;
+    setSelectedSeats(prev =>
+      prev.includes(seatId) ? prev.filter(s => s !== seatId) : [...prev, seatId]
+    );
+  };
+
   const confirmBookingAndPay = async () => {
-    if (!selectedSeat) {
-      setBookingError('Please select a seat to proceed.');
+    if (!selectedSeats || selectedSeats.length === 0) {
+      setBookingError('Please select at least one seat to proceed.');
       return;
     }
 
@@ -173,21 +196,27 @@ function App() {
     setBookingError('');
 
     try {
-      // Step 1: Create booking in booking-service
-      const bookingRes = await api.createBooking(user.id, selectedShow.id, selectedSeat);
+      // Step 1: Create booking in booking-service (supports multiple seats)
+      const bookingRes = await api.createBooking(user.id, selectedShow.id, selectedSeats);
+      const totalAmount = (selectedShow?.ticketPrice || 350) * selectedSeats.length;
 
       // Step 2: Process payment in payment-service
       const paymentRes = await api.processPayment(
         bookingRes.bookingId || bookingRes.id,
         user.id,
-        selectedShow.ticketPrice,
+        bookingRes.totalAmount || totalAmount,
         paymentMethod
       );
 
       setBookingSuccess({
         booking: bookingRes,
         payment: paymentRes,
+        seats: selectedSeats,
       });
+
+      // Refresh booked seats for the show so they turn grey immediately
+      fetchBookedSeats(selectedShow.id);
+      setSelectedSeats([]);
 
       // Refresh user bookings list
       loadUserBookings(user.id);
@@ -434,8 +463,11 @@ function App() {
               <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎟️</div>
                 <h3 style={{ color: '#4ade80', marginBottom: '0.5rem' }}>Booking Confirmed!</h3>
-                <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>
-                  Booking #{bookingSuccess.booking?.bookingId || bookingSuccess.booking?.id} • Seat {selectedSeat}
+                <p style={{ color: '#94a3b8', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+                  Booking #{bookingSuccess.booking?.bookingId || bookingSuccess.booking?.id} • Seats: <strong style={{ color: '#38bdf8' }}>{bookingSuccess.booking?.seatNumber || bookingSuccess.seats?.join(', ')}</strong>
+                </p>
+                <p style={{ color: '#4ade80', fontWeight: '700', fontSize: '1.2rem', marginBottom: '1.5rem' }}>
+                  Total Amount Paid: ₹{bookingSuccess.booking?.totalAmount || (selectedShow?.ticketPrice || 350) * (bookingSuccess.seats?.length || 1)}
                 </p>
 
                 {/* QR Code representation */}
@@ -444,7 +476,7 @@ function App() {
                 </div>
 
                 <p style={{ fontSize: '0.9rem', color: '#38bdf8', marginBottom: '1.5rem' }}>
-                  Payment Method: {paymentMethod} • Status: PAID (₹{selectedShow?.ticketPrice})
+                  Payment Method: {paymentMethod} • Status: PAID
                 </p>
                 <button
                   className="primary-btn"
@@ -459,7 +491,7 @@ function App() {
             ) : (
               <div>
                 <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>
-                  Screen: <strong>{selectedShow?.screenName || 'Screen 1'}</strong> • Price: <strong>₹{selectedShow?.ticketPrice || 350}</strong>
+                  Screen: <strong>{selectedShow?.screenName || 'Screen 1'}</strong> • Price per Seat: <strong>₹{selectedShow?.ticketPrice || 350}</strong>
                 </p>
 
                 <div className="screen-indicator"></div>
@@ -471,12 +503,14 @@ function App() {
                       <span className="row-label">{row}</span>
                       {seatCols.map(col => {
                         const seatId = `${row}${col}`;
-                        const isSelected = selectedSeat === seatId;
+                        const isBooked = bookedSeats.includes(seatId);
+                        const isSelected = selectedSeats.includes(seatId);
                         return (
                           <div
                             key={seatId}
-                            className={`seat ${isSelected ? 'selected' : ''}`}
-                            onClick={() => setSelectedSeat(seatId)}
+                            title={isBooked ? `Seat ${seatId} (Booked / Unavailable)` : `Seat ${seatId} (Click to select/deselect)`}
+                            className={`seat ${isBooked ? 'booked' : ''} ${isSelected ? 'selected' : ''}`}
+                            onClick={() => handleSeatClick(seatId)}
                           >
                             {col}
                           </div>
@@ -496,10 +530,21 @@ function App() {
                     <span>Selected</span>
                   </div>
                   <div className="legend-item">
-                    <div className="legend-box" style={{ background: '#1e293b' }}></div>
-                    <span>Booked</span>
+                    <div className="legend-box" style={{ background: '#64748b' }}></div>
+                    <span>Booked (Unavailable)</span>
                   </div>
                 </div>
+
+                {selectedSeats.length > 0 && (
+                  <div className="seat-summary-banner">
+                    <div>
+                      Selected: <strong style={{ color: '#38bdf8' }}>{selectedSeats.join(', ')}</strong> ({selectedSeats.length} {selectedSeats.length === 1 ? 'seat' : 'seats'})
+                    </div>
+                    <div>
+                      Total: <strong style={{ color: '#4ade80' }}>₹{(selectedShow?.ticketPrice || 350) * selectedSeats.length}</strong>
+                    </div>
+                  </div>
+                )}
 
                 <div className="form-group">
                   <label>Payment Method</label>
@@ -522,10 +567,14 @@ function App() {
 
                 <button
                   className="primary-btn"
-                  disabled={bookingLoading || !selectedSeat}
+                  disabled={bookingLoading || selectedSeats.length === 0}
                   onClick={confirmBookingAndPay}
                 >
-                  {bookingLoading ? 'Processing Transaction...' : `Pay ₹${selectedShow?.ticketPrice || 350} & Confirm Seat ${selectedSeat || ''}`}
+                  {bookingLoading
+                    ? 'Processing Transaction...'
+                    : selectedSeats.length > 0
+                    ? `Pay ₹${(selectedShow?.ticketPrice || 350) * selectedSeats.length} & Confirm ${selectedSeats.length} ${selectedSeats.length === 1 ? 'Seat' : 'Seats'} (${selectedSeats.join(', ')})`
+                    : 'Select at least one seat to proceed'}
                 </button>
               </div>
             )}

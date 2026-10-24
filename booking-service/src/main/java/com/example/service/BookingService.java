@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -43,226 +44,145 @@ public class BookingService {
         this.movieClient = movieClient;
     }
 
-    public BookingResponse createBooking(
-            BookingRequest request) {
+    public BookingResponse createBooking(BookingRequest request) {
 
         UserDTO user;
-
         ShowDTO show;
-
         MovieDTO movie;
 
         /*
-         * STEP 1:
-         * Verify user using USER SERVICE.
+         * STEP 1: Verify user using USER SERVICE.
          */
         try {
-
-            user = userClient.getUserById(
-                    request.getUserId()
-            );
-
+            user = userClient.getUserById(request.getUserId());
         } catch (FeignException e) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid user ID"
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid user ID");
         }
 
-
         /*
-         * STEP 2:
-         * Get show from THEATRE SERVICE.
+         * STEP 2: Get show from THEATRE SERVICE.
          */
         try {
-
-            show = theatreClient.getShowById(
-                    request.getShowId()
-            );
-
+            show = theatreClient.getShowById(request.getShowId());
         } catch (FeignException e) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid show ID"
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid show ID");
         }
 
-
         /*
-         * STEP 3:
-         * Get movie ID from Show,
-         * then call MOVIE SERVICE.
+         * STEP 3: Get movie ID from Show, then call MOVIE SERVICE.
          */
         try {
-
-            movie = movieClient.getMovieById(
-                    show.getMovieId()
-            );
-
+            movie = movieClient.getMovieById(show.getMovieId());
         } catch (FeignException e) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Movie for this show does not exist"
-            );
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Movie for this show does not exist");
         }
 
-
         /*
-         * STEP 4:
-         * Check seat is valid.
+         * STEP 4: Parse & validate seat list (supports single or multiple seats).
          */
-        if (request.getSeatNumber() == null ||
-                request.getSeatNumber().isBlank()) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Seat number is required"
-            );
+        List<String> seatsToBook;
+        if (request.getSeatNumbers() != null && !request.getSeatNumbers().isEmpty()) {
+            seatsToBook = request.getSeatNumbers().stream()
+                    .map(String::trim)
+                    .map(String::toUpperCase)
+                    .filter(s -> !s.isBlank())
+                    .distinct()
+                    .toList();
+        } else if (request.getSeatNumber() != null && !request.getSeatNumber().isBlank()) {
+            seatsToBook = Arrays.stream(request.getSeatNumber().split(","))
+                    .map(String::trim)
+                    .map(String::toUpperCase)
+                    .filter(s -> !s.isBlank())
+                    .distinct()
+                    .toList();
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one seat number is required");
         }
 
-
-        /*
-         * STEP 5:
-         * Prevent same seat from being booked twice.
-         */
-        boolean alreadyBooked =
-                bookingRepository
-                        .existsByShowIdAndSeatNumberAndStatus(
-                                request.getShowId(),
-                                request.getSeatNumber(),
-                                "CONFIRMED"
-                        );
-
-        if (alreadyBooked) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Seat " +
-                            request.getSeatNumber() +
-                            " is already booked"
-            );
+        if (seatsToBook.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one seat number is required");
         }
 
+        /*
+         * STEP 5: Prevent already booked seats from being booked again.
+         */
+        List<String> currentlyBooked = getBookedSeatsByShow(request.getShowId());
+        for (String seat : seatsToBook) {
+            if (currentlyBooked.contains(seat)) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Seat " + seat + " is already booked"
+                );
+            }
+        }
 
         /*
-         * STEP 6:
-         * Create booking.
+         * STEP 6: Create booking entity with all selected seats and calculate total amount.
          */
+        String joinedSeats = String.join(", ", seatsToBook);
+        double ticketPrice = (show.getTicketPrice() != null) ? show.getTicketPrice() : 0.0;
+        double totalAmount = ticketPrice * seatsToBook.size();
+
         Booking booking = new Booking();
-
-        booking.setUserId(
-                request.getUserId()
-        );
-
-        booking.setShowId(
-                request.getShowId()
-        );
-
-        booking.setMovieId(
-                show.getMovieId()
-        );
-
-        booking.setSeatNumber(
-                request.getSeatNumber()
-                        .toUpperCase()
-        );
+        booking.setUserId(request.getUserId());
+        booking.setShowId(request.getShowId());
+        booking.setMovieId(show.getMovieId());
+        booking.setSeatNumber(joinedSeats);
+        booking.setTotalAmount(totalAmount);
+        booking.setStatus("CONFIRMED");
+        booking.setBookingDate(LocalDateTime.now());
 
         /*
-         * Price comes from Theatre Service.
-         * User cannot send their own price.
+         * STEP 7: Save to Booking DB & publish Kafka event.
          */
-        booking.setTotalAmount(
-                show.getTicketPrice()
-        );
-
-        booking.setStatus(
-                "CONFIRMED"
-        );
-
-        booking.setBookingDate(
-                LocalDateTime.now()
-        );
-
-
-        /*
-         * STEP 7:
-         * Save to Booking DB.
-         */
-        Booking saved =
-                bookingRepository.save(booking);
-
-        /*
-         * Publish BookingCreated Event to Kafka
-         */
+        Booking saved = bookingRepository.save(booking);
         publishEvent("BOOKING_CREATED", saved.getUserId(), saved.getId(), saved.getMovieId(), saved.getTotalAmount());
 
         /*
-         * STEP 8:
-         * Build response containing data
-         * from different microservices.
+         * STEP 8: Build and return composite response.
          */
-        return createResponse(
-                saved,
-                user,
-                movie
-        );
+        return createResponse(saved, user, movie);
     }
-
 
     public Booking getBookingById(Long id) {
-
         return bookingRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Booking not found"
-                        )
-                );
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
     }
 
-
     public List<Booking> getAllBookings() {
-
         return bookingRepository.findAll();
     }
 
-
-    public List<Booking> getBookingsByUser(
-            Long userId) {
-
-        return bookingRepository.findByUserId(
-                userId
-        );
+    public List<Booking> getBookingsByUser(Long userId) {
+        return bookingRepository.findByUserId(userId);
     }
 
+    public List<Booking> getBookingsByShow(Long showId) {
+        return bookingRepository.findByShowId(showId);
+    }
+
+    public List<String> getBookedSeatsByShow(Long showId) {
+        return bookingRepository.findByShowId(showId).stream()
+                .filter(b -> "CONFIRMED".equalsIgnoreCase(b.getStatus()))
+                .flatMap(b -> Arrays.stream(b.getSeatNumber().split(",")))
+                .map(String::trim)
+                .map(String::toUpperCase)
+                .filter(s -> !s.isBlank())
+                .distinct()
+                .toList();
+    }
 
     public Booking cancelBooking(Long id) {
+        Booking booking = getBookingById(id);
 
-        Booking booking =
-                getBookingById(id);
-
-        if ("CANCELLED".equals(
-                booking.getStatus())) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Booking is already cancelled"
-            );
+        if ("CANCELLED".equals(booking.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Booking is already cancelled");
         }
 
-        booking.setStatus(
-                "CANCELLED"
-        );
-
-        Booking saved = bookingRepository.save(
-                booking
-        );
+        booking.setStatus("CANCELLED");
+        Booking saved = bookingRepository.save(booking);
 
         publishEvent("BOOKING_CANCELLED", saved.getUserId(), saved.getId(), saved.getMovieId(), saved.getTotalAmount());
-
         return saved;
     }
 
@@ -278,47 +198,16 @@ public class BookingService {
         }
     }
 
-
-    private BookingResponse createResponse(
-            Booking booking,
-            UserDTO user,
-            MovieDTO movie) {
-
-        BookingResponse response =
-                new BookingResponse();
-
-        response.setBookingId(
-                booking.getId()
-        );
-
-        response.setCustomerName(
-                user.getName()
-        );
-
-        response.setMovieTitle(
-                movie.getTitle()
-        );
-
-        response.setShowId(
-                booking.getShowId()
-        );
-
-        response.setSeatNumber(
-                booking.getSeatNumber()
-        );
-
-        response.setTotalAmount(
-                booking.getTotalAmount()
-        );
-
-        response.setStatus(
-                booking.getStatus()
-        );
-
-        response.setBookingDate(
-                booking.getBookingDate()
-        );
-
+    private BookingResponse createResponse(Booking booking, UserDTO user, MovieDTO movie) {
+        BookingResponse response = new BookingResponse();
+        response.setBookingId(booking.getId());
+        response.setCustomerName(user.getName());
+        response.setMovieTitle(movie.getTitle());
+        response.setShowId(booking.getShowId());
+        response.setSeatNumber(booking.getSeatNumber());
+        response.setTotalAmount(booking.getTotalAmount());
+        response.setStatus(booking.getStatus());
+        response.setBookingDate(booking.getBookingDate());
         return response;
     }
 }

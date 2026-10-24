@@ -1,6 +1,6 @@
 package com.example.dto;
 
-
+import java.util.List;
 
 public class BookingRequest {
 
@@ -9,6 +9,8 @@ public class BookingRequest {
     private Long showId;
 
     private String seatNumber;
+
+    private List<String> seatNumbers;
 
     public BookingRequest() {
     }
@@ -36,4 +38,13 @@ public class BookingRequest {
     public void setSeatNumber(String seatNumber) {
         this.seatNumber = seatNumber;
     }
+
+    public List<String> getSeatNumbers() {
+        return seatNumbers;
+    }
+
+    public void setSeatNumbers(List<String> seatNumbers) {
+        this.seatNumbers = seatNumbers;
+    }
 }
+
