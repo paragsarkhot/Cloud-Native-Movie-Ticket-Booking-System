@@ -1,0 +1,149 @@
+// API service calling through Spring Cloud API Gateway (port 8080)
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+
+const getHeaders = () => {
+  const token = localStorage.getItem('token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+};
+
+export const api = {
+  // Auth & Users
+  login: async (email, password) => {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Login failed');
+    return res.json();
+  },
+
+  register: async (name, email, password) => {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role: 'CUSTOMER' }),
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Registration failed');
+    return res.json();
+  },
+
+  // Movies
+  getMovies: async () => {
+    const res = await fetch(`${API_BASE}/api/movies`);
+    if (!res.ok) throw new Error('Failed to fetch movies');
+    return res.json();
+  },
+
+  getMovieById: async (id) => {
+    const res = await fetch(`${API_BASE}/api/movies/${id}`);
+    if (!res.ok) throw new Error('Failed to fetch movie');
+    return res.json();
+  },
+
+  // Theatres & Shows
+  getTheatres: async () => {
+    const res = await fetch(`${API_BASE}/api/theatres`);
+    if (!res.ok) throw new Error('Failed to fetch theatres');
+    return res.json();
+  },
+
+  getShowsByMovie: async (movieId) => {
+    const res = await fetch(`${API_BASE}/api/shows/movie/${movieId}`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  getShowById: async (id) => {
+    const res = await fetch(`${API_BASE}/api/shows/${id}`);
+    if (!res.ok) throw new Error('Failed to fetch show');
+    return res.json();
+  },
+
+  // Bookings
+  createBooking: async (userId, showId, seatNumber) => {
+    const res = await fetch(`${API_BASE}/api/bookings`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ userId, showId, seatNumber }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Seat is already booked or invalid');
+    }
+    return res.json();
+  },
+
+  getUserBookings: async (userId) => {
+    const res = await fetch(`${API_BASE}/api/bookings/user/${userId}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  cancelBooking: async (bookingId) => {
+    const res = await fetch(`${API_BASE}/api/bookings/${bookingId}/cancel`, {
+      method: 'PUT',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to cancel booking');
+    return res.json();
+  },
+
+  // Payments
+  processPayment: async (bookingId, userId, amount, paymentMethod) => {
+    const res = await fetch(`${API_BASE}/api/payments`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ bookingId, userId, amount, paymentMethod }),
+    });
+    if (!res.ok) throw new Error('Payment processing failed');
+    return res.json();
+  },
+
+  // Reviews
+  getReviewsByMovie: async (movieId) => {
+    const res = await fetch(`${API_BASE}/api/reviews/movie/${movieId}`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  addReview: async (userId, movieId, rating, reviewText) => {
+    const res = await fetch(`${API_BASE}/api/reviews`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ userId, movieId, rating, reviewText }),
+    });
+    if (!res.ok) throw new Error('Failed to submit review');
+    return res.json();
+  },
+
+  // Notifications
+  getNotifications: async (userId) => {
+    const res = await fetch(`${API_BASE}/api/notifications/user/${userId}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  // Analytics
+  getAnalyticsStats: async () => {
+    const res = await fetch(`${API_BASE}/api/analytics/stats`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to load analytics');
+    return res.json();
+  },
+
+  getPopularMovies: async () => {
+    const res = await fetch(`${API_BASE}/api/analytics/movies/popular`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    return res.json();
+  },
+};

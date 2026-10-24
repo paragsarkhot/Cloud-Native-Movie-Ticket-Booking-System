@@ -7,7 +7,11 @@ import com.example.dto.*;
 import com.example.entity.Booking;
 import com.example.repository.BookingRepository;
 import feign.FeignException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,13 +21,15 @@ import java.util.List;
 @Service
 public class BookingService {
 
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
+
     private final BookingRepository bookingRepository;
-
     private final UserClient userClient;
-
     private final TheatreClient theatreClient;
-
     private final MovieClient movieClient;
+
+    @Autowired(required = false)
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     public BookingService(
             BookingRepository bookingRepository,
@@ -188,6 +194,10 @@ public class BookingService {
         Booking saved =
                 bookingRepository.save(booking);
 
+        /*
+         * Publish BookingCreated Event to Kafka
+         */
+        publishEvent("BOOKING_CREATED", saved.getUserId(), saved.getId(), saved.getMovieId(), saved.getTotalAmount());
 
         /*
          * STEP 8:
@@ -247,9 +257,25 @@ public class BookingService {
                 "CANCELLED"
         );
 
-        return bookingRepository.save(
+        Booking saved = bookingRepository.save(
                 booking
         );
+
+        publishEvent("BOOKING_CANCELLED", saved.getUserId(), saved.getId(), saved.getMovieId(), saved.getTotalAmount());
+
+        return saved;
+    }
+
+    private void publishEvent(String eventType, Long userId, Long bookingId, Long movieId, Double amount) {
+        if (kafkaTemplate != null) {
+            try {
+                String payload = String.format("%s|%d|%d|%d|%.2f", eventType, userId, bookingId, movieId != null ? movieId : 0, amount != null ? amount : 0.0);
+                kafkaTemplate.send("booking-events", payload);
+                log.info("Sent event to Kafka [booking-events]: {}", payload);
+            } catch (Exception e) {
+                log.warn("Failed to publish Kafka event: {}", e.getMessage());
+            }
+        }
     }
 
 

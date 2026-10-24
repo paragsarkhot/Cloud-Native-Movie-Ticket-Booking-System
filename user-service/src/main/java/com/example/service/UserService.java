@@ -69,4 +69,22 @@ public class UserService {
 
         userRepository.delete(user);
     }
+
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found with email: " + email
+                ));
+    }
+
+    public User saveRawUser(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Email already registered"
+            );
+        }
+        return userRepository.save(user);
+    }
 }
