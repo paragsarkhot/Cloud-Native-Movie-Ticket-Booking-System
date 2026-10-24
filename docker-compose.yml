@@ -117,7 +117,7 @@ services:
       - "8081:8081"
     environment:
       SPRING_APPLICATION_NAME: user-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/user_db?createDatabaseIfNotExist=true&useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/user_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -139,7 +139,7 @@ services:
       - "8082:8082"
     environment:
       SPRING_APPLICATION_NAME: movie-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/movie_db?createDatabaseIfNotExist=true&useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/movie_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -161,7 +161,7 @@ services:
       - "8083:8083"
     environment:
       SPRING_APPLICATION_NAME: theatre-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theatre_db?createDatabaseIfNotExist=true&useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/theatre_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -183,7 +183,7 @@ services:
       - "8084:8084"
     environment:
       SPRING_APPLICATION_NAME: booking-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/booking_db?createDatabaseIfNotExist=true&useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/booking_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -206,7 +206,7 @@ services:
       - "8085:8085"
     environment:
       SPRING_APPLICATION_NAME: payment-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/payment_db?createDatabaseIfNotExist=true&useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/payment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -229,7 +229,7 @@ services:
       - "8086:8086"
     environment:
       SPRING_APPLICATION_NAME: notification-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/notification_db?createDatabaseIfNotExist=true&useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/notification_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -252,7 +252,7 @@ services:
       - "8087:8087"
     environment:
       SPRING_APPLICATION_NAME: review-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/review_db?createDatabaseIfNotExist=true&useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/review_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -274,7 +274,7 @@ services:
       - "8088:8088"
     environment:
       SPRING_APPLICATION_NAME: analytics-service
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/analytics_db?createDatabaseIfNotExist=true&useSSL=false
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/analytics_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/

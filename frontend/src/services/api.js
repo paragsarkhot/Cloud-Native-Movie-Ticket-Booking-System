@@ -1,5 +1,5 @@
-// API service calling through Spring Cloud API Gateway (port 8080)
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+// API service calling through relative path (proxied by Nginx to API Gateway) or fallback to 8080
+const API_BASE = process.env.REACT_APP_API_URL !== undefined ? process.env.REACT_APP_API_URL : '';
 
 const getHeaders = () => {
   const token = localStorage.getItem('token');
