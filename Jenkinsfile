@@ -10,7 +10,7 @@ pipeline {
 
     environment {
         DOCKER_BUILDKIT = '1'
-        MAVEN_OPTS = '-Xmx256m'
+        MAVEN_OPTS = '-Xmx512m'
     }
 
     stages {
@@ -24,7 +24,7 @@ pipeline {
         stage('Compile & Run Unit Tests') {
             steps {
                 echo '=== Step 2: Running Unit Tests for all Microservices ==='
-                sh 'mvn test --batch-mode -DforkCount=1 -DargLine="-Xmx96m"'
+                sh 'mvn clean test --batch-mode'
             }
             post {
                 always {
@@ -74,9 +74,6 @@ pipeline {
 
                     echo "Building Analytics Service image..."
                     docker build -t movieticket/analytics-service:latest ./analytics-service
-
-                    echo "Building Frontend image..."
-                    docker build -t movieticket/frontend:latest ./frontend
 
                     echo "All Docker images built successfully!"
                 '''
