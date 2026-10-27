@@ -61,6 +61,7 @@ services:
 
   # 3. Jenkins CI/CD Container
   jenkins:
+    image: movieticket/jenkins:latest
     build:
       context: ./jenkins
     container_name: movieticket-jenkins
@@ -79,6 +80,7 @@ services:
 
   # 4. Service Discovery (Eureka Server)
   eureka-server:
+    image: movieticket/eureka-server:latest
     build:
       context: ./eureka-server
     container_name: eureka-server
@@ -87,12 +89,13 @@ services:
       - "8761:8761"
     environment:
       SPRING_APPLICATION_NAME: eureka-server
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 5. API Gateway
   api-gateway:
+    image: movieticket/api-gateway:latest
     build:
       context: ./api-gateway
     container_name: api-gateway
@@ -104,12 +107,13 @@ services:
     environment:
       SPRING_APPLICATION_NAME: api-gateway
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 6. User Service
   user-service:
+    image: movieticket/user-service:latest
     build:
       context: ./user-service
     container_name: user-service
@@ -127,12 +131,13 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 7. Movie Service
   movie-service:
+    image: movieticket/movie-service:latest
     build:
       context: ./movie-service
     container_name: movie-service
@@ -150,12 +155,13 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 8. Theatre Service
   theatre-service:
+    image: movieticket/theatre-service:latest
     build:
       context: ./theatre-service
     container_name: theatre-service
@@ -173,12 +179,13 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 9. Booking Service
   booking-service:
+    image: movieticket/booking-service:latest
     build:
       context: ./booking-service
     container_name: booking-service
@@ -197,12 +204,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 10. Payment Service
   payment-service:
+    image: movieticket/payment-service:latest
     build:
       context: ./payment-service
     container_name: payment-service
@@ -221,12 +229,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 11. Notification Service
   notification-service:
+    image: movieticket/notification-service:latest
     build:
       context: ./notification-service
     container_name: notification-service
@@ -245,12 +254,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 12. Review Service
   review-service:
+    image: movieticket/review-service:latest
     build:
       context: ./review-service
     container_name: review-service
@@ -268,12 +278,13 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 13. Analytics Service
   analytics-service:
+    image: movieticket/analytics-service:latest
     build:
       context: ./analytics-service
     container_name: analytics-service
@@ -292,12 +303,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: "123456"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      JAVA_TOOL_OPTIONS: "-Xmx180m -Xms64m -XX:+UseSerialGC"
+      JAVA_TOOL_OPTIONS: "-Xmx110m -Xms32m -XX:+UseSerialGC -XX:MaxMetaspaceSize=80m"
     networks:
       - movieticket-network
 
   # 14. React Frontend
   frontend:
+    image: movieticket/frontend:latest
     build:
       context: ./frontend
     container_name: movieticket-frontend
