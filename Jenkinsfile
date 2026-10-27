@@ -10,6 +10,7 @@ pipeline {
 
     environment {
         DOCKER_BUILDKIT = '1'
+        MAVEN_OPTS = '-Xmx512m'
     }
 
     stages {
