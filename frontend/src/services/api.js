@@ -43,15 +43,27 @@ export const api = {
     return res.json();
   },
 
-  // Theatres & Shows
+  // Theatres & Shows (theatre-service)
   getTheatres: async () => {
     const res = await fetch(`${API_BASE}/api/theatres`);
     if (!res.ok) throw new Error('Failed to fetch theatres');
     return res.json();
   },
 
+  getShows: async () => {
+    const res = await fetch(`${API_BASE}/api/shows`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
   getShowsByMovie: async (movieId) => {
     const res = await fetch(`${API_BASE}/api/shows/movie/${movieId}`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  getShowsByTheatre: async (theatreId) => {
+    const res = await fetch(`${API_BASE}/api/shows/theatre/${theatreId}`);
     if (!res.ok) return [];
     return res.json();
   },
@@ -62,7 +74,7 @@ export const api = {
     return res.json();
   },
 
-  // Bookings
+  // Bookings (booking-service)
   getBookedSeats: async (showId) => {
     const res = await fetch(`${API_BASE}/api/bookings/show/${showId}/seats`);
     if (!res.ok) return [];
@@ -106,7 +118,7 @@ export const api = {
     return res.json();
   },
 
-  // Payments
+  // Payments (payment-service)
   processPayment: async (bookingId, userId, amount, paymentMethod) => {
     const res = await fetch(`${API_BASE}/api/payments`, {
       method: 'POST',
@@ -117,10 +129,33 @@ export const api = {
     return res.json();
   },
 
-  // Reviews
+  getPaymentsByUser: async (userId) => {
+    const res = await fetch(`${API_BASE}/api/payments/user/${userId}`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) return [];
+    return res.json();
+  },
+
+  refundPayment: async (paymentId) => {
+    const res = await fetch(`${API_BASE}/api/payments/${paymentId}/refund`, {
+      method: 'PUT',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Refund failed');
+    return res.json();
+  },
+
+  // Reviews (review-service)
   getReviewsByMovie: async (movieId) => {
     const res = await fetch(`${API_BASE}/api/reviews/movie/${movieId}`);
     if (!res.ok) return [];
+    return res.json();
+  },
+
+  getAverageRating: async (movieId) => {
+    const res = await fetch(`${API_BASE}/api/reviews/movie/${movieId}/rating`);
+    if (!res.ok) return null;
     return res.json();
   },
 
@@ -128,13 +163,13 @@ export const api = {
     const res = await fetch(`${API_BASE}/api/reviews`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ userId, movieId, rating, reviewText }),
+      body: JSON.stringify({ userId, movieId, rating, reviewText, status: 'APPROVED' }),
     });
     if (!res.ok) throw new Error('Failed to submit review');
     return res.json();
   },
 
-  // Notifications
+  // Notifications (notification-service)
   getNotifications: async (userId) => {
     const res = await fetch(`${API_BASE}/api/notifications/user/${userId}`, {
       headers: getHeaders(),
@@ -143,7 +178,16 @@ export const api = {
     return res.json();
   },
 
-  // Analytics
+  markNotificationAsRead: async (id) => {
+    const res = await fetch(`${API_BASE}/api/notifications/${id}/read`, {
+      method: 'PUT',
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to mark notification as read');
+    return res.json();
+  },
+
+  // Analytics (analytics-service)
   getAnalyticsStats: async () => {
     const res = await fetch(`${API_BASE}/api/analytics/stats`, {
       headers: getHeaders(),
