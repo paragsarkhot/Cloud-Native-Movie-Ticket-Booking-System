@@ -10,7 +10,7 @@ pipeline {
 
     environment {
         DOCKER_BUILDKIT = '1'
-        MAVEN_OPTS = '-Xmx512m'
+        MAVEN_OPTS = '-Xmx384m'
     }
 
     stages {
@@ -24,7 +24,7 @@ pipeline {
         stage('Compile & Run Unit Tests') {
             steps {
                 echo '=== Step 2: Running Unit Tests for all Microservices ==='
-                sh 'mvn clean test --batch-mode'
+                sh 'mvn test --batch-mode -DforkCount=1 -DargLine="-Xmx128m"'
             }
             post {
                 always {
