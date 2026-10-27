@@ -74,7 +74,7 @@ services:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      JAVA_OPTS: "-Xmx1024m -Xms256m"
+      JAVA_OPTS: "-Xmx384m -Xms128m -XX:+UseSerialGC"
     networks:
       - movieticket-network
 
