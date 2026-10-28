@@ -1,6 +1,6 @@
 services:
 
-  # 1. MySQL Database Container (creates all 8 DBs automatically)
+  # 1. MySQL Database Container
   mysql:
     image: mysql:8.0
     container_name: movieticket-mysql
